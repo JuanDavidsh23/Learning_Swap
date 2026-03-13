@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from models.user import User
 from models.interaction import Interaction, ActionEnum
 from models.match import Match
+from models.chat_room import ChatRoom
 from schemas.match import InteractionRequest
 
 def create_interaction(db: Session, data: InteractionRequest):
@@ -53,11 +54,20 @@ def create_interaction(db: Session, data: InteractionRequest):
             # Crear el Match en la tabla matches
             new_match = Match(user1_id=user1_id, user2_id=user2_id)
             db.add(new_match)
+            db.flush()  # Para obtener el match_id generado
+            
+            # ¡CREAR LA SALA DE CHAT automáticamente!
+            new_chat_room = ChatRoom(match_id=new_match.match_id)
+            db.add(new_chat_room)
 
     db.commit()
 
     if is_match:
-        return {"msg": "¡It's a Match!", "match_created": True}
+        return {
+            "msg": "¡It's a Match!", 
+            "match_created": True,
+            "room_id": new_chat_room.room_id
+        }
     return {"msg": "Interacción guardada", "match_created": False}
 
 def get_user_feed(db: Session, current_user_id: int):
@@ -107,3 +117,38 @@ def get_user_feed(db: Session, current_user_id: int):
         })
 
     return {"users": result}
+
+def get_user_matches(db: Session, user_id: int):
+    from sqlalchemy import or_
+    
+    # Buscar todos los matches donde este usuario sea user1 o user2
+    matches = db.query(Match).filter(
+        or_(
+            Match.user1_id == user_id,
+            Match.user2_id == user_id
+        )
+    ).all()
+    
+    result = []
+    
+    for match in matches:
+        # Determinar quién es la OTRA persona
+        if match.user1_id == user_id:
+            other_user = db.query(User).filter(User.user_id == match.user2_id).first()
+        else:
+            other_user = db.query(User).filter(User.user_id == match.user1_id).first()
+        
+        # Buscar la sala de chat asociada a este match
+        chat_room = db.query(ChatRoom).filter(ChatRoom.match_id == match.match_id).first()
+        
+        result.append({
+            "match_id": match.match_id,
+            "room_id": chat_room.room_id if chat_room else None,
+            "user_id": other_user.user_id,
+            "first_name": other_user.first_name,
+            "last_name": other_user.last_name,
+            "avatar_url": other_user.avatar_url,
+            "bio": other_user.bio
+        })
+    
+    return {"matches": result}

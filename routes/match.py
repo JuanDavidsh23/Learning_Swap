@@ -32,3 +32,12 @@ def get_feed(user_id: int, db: Session = Depends(get_db)):
     """
     from services.match_service import get_user_feed
     return get_user_feed(db, current_user_id=user_id)
+
+@router.get("/matches/{user_id}", response_model=dict)
+def get_matches(user_id: int, db: Session = Depends(get_db)):
+    """
+    Devuelve la lista de personas con las que el usuario
+    ya hizo Match, junto con el room_id del chat.
+    """
+    from services.match_service import get_user_matches
+    return get_user_matches(db, user_id=user_id)
