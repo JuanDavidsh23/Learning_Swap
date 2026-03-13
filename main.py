@@ -12,7 +12,7 @@ from routes.auth import router as auth_router
 from middlewares.cors import add_cors_middleware
 from routes.ai import router as ai_router
 from routes.skill import router as skill_router
-
+from routes.match import router as match_router
 
 # importar websocket
 from websocket.chat_ws import router as chat_ws_router
@@ -36,3 +36,6 @@ app.include_router(ai_router)
 
 # onboarding de habilidades
 app.include_router(skill_router)
+
+# sistema de matching y swipes
+app.include_router(match_router)
