@@ -72,53 +72,84 @@ def create_interaction(db: Session, data: InteractionRequest):
     return {"msg": "Interacción guardada", "match_created": False}
 
 def get_user_feed(db: Session, current_user_id: int):
-    # Obtiene una lista de perfiles que el usuario aun no ha evaluado
-    # 1. Obtener los IDs de los usuarios con los que YA interactué (para excluirlos)
+    from models.users_skills import UserSkill, IntentEnum
+    from models.skill import Skill
+    
+    # 1. Obtener los IDs de usuarios ya swipeados (para excluirlos)
     interacted_users = db.query(Interaction.user_to_id).filter(
         Interaction.user_from_id == current_user_id
     ).all()
-    # interacted_users retorna una lista de tuplas: [(2,), (3,)]
-    interacted_ids = [u[0] for u in interacted_users]
-    
-    # Excluimos también al propio usuario
-    interacted_ids.append(current_user_id)
+    excluded_ids = [u[0] for u in interacted_users]
+    excluded_ids.append(current_user_id)  # Excluirme a mí mismo
 
-    # 2. Buscar usuarios que NO estén en esa lista de excluidos
-    # (En un proyecto real, aquí también filtrarías por rol, ubicación, o skills)
-    potential_matches = db.query(User).filter(
-        User.user_id.notin_(interacted_ids)
-    ).limit(20).all() # Traemos máximo 20 tarjetas por ahora
-
-    result = []
+    # 2. Obtener MIS skills (qué quiero aprender y qué enseño)
+    my_learn = [s[0] for s in db.query(UserSkill.skill_id).filter(
+        UserSkill.user_id == current_user_id,
+        UserSkill.intent == IntentEnum.learn
+    ).all()]
     
-    # 3. Formatear la respuesta con las habilidades de cada uno
-    for p_user in potential_matches:
-        from models.users_skills import UserSkill, IntentEnum
-        from models.skill import Skill
-        
-        # Habilidades que quiere enseñar
-        teach_skills = db.query(Skill.name).join(UserSkill).filter(
+    my_teach = [s[0] for s in db.query(UserSkill.skill_id).filter(
+        UserSkill.user_id == current_user_id,
+        UserSkill.intent == IntentEnum.teach
+    ).all()]
+
+    # 3. Buscar TODOS los usuarios disponibles (no swipeados, no soy yo)
+    all_available = db.query(User).filter(
+        User.user_id.notin_(excluded_ids)
+    ).order_by(User.datetime_created_at.desc()).all()
+
+    compatible_users = []
+    other_users = []
+
+    for p_user in all_available:
+        # Skills de este usuario
+        their_teach = [s[0] for s in db.query(UserSkill.skill_id).filter(
             UserSkill.user_id == p_user.user_id,
             UserSkill.intent == IntentEnum.teach
-        ).all()
+        ).all()]
         
-        # Habilidades que quiere aprender
-        learn_skills = db.query(Skill.name).join(UserSkill).filter(
+        their_learn = [s[0] for s in db.query(UserSkill.skill_id).filter(
             UserSkill.user_id == p_user.user_id,
             UserSkill.intent == IntentEnum.learn
-        ).all()
+        ).all()]
 
-        result.append({
+        # ¿Es compatible? (lo que yo quiero aprender, él enseña, o viceversa)
+        is_compatible = (
+            bool(set(my_learn) & set(their_teach)) or
+            bool(set(my_teach) & set(their_learn))
+        )
+
+        # Nombres de skills para la respuesta
+        teach_names = [s[0] for s in db.query(Skill.name).join(UserSkill).filter(
+            UserSkill.user_id == p_user.user_id,
+            UserSkill.intent == IntentEnum.teach
+        ).all()]
+        
+        learn_names = [s[0] for s in db.query(Skill.name).join(UserSkill).filter(
+            UserSkill.user_id == p_user.user_id,
+            UserSkill.intent == IntentEnum.learn
+        ).all()]
+
+        user_data = {
             "user_id": p_user.user_id,
             "first_name": p_user.first_name,
             "last_name": p_user.last_name,
             "bio": p_user.bio,
             "avatar_url": p_user.avatar_url,
-            "skills_to_teach": [s[0] for s in teach_skills],
-            "skills_to_learn": [s[0] for s in learn_skills]
-        })
+            "skills_to_teach": teach_names,
+            "skills_to_learn": learn_names
+        }
 
-    return {"users": result}
+        if is_compatible:
+            compatible_users.append(user_data)
+        else:
+            other_users.append(user_data)
+
+    # 4. PRIORIZAR compatibles primero, luego los demás (fallback)
+    result = compatible_users + other_users
+
+    # Limitar a 30 tarjetas máximo
+    return {"users": result[:30]}
 
 def get_user_matches(db: Session, user_id: int):
     # Devuelve todos los matches exitosos de un usuario y los IDs de chat correspondientes
