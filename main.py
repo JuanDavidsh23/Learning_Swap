@@ -16,6 +16,9 @@ from routes.skill import router as skill_router
 from routes.match import router as match_router
 from routes.user import router as user_router
 from routes.stats import router as stats_router
+from routes.admin_skills import router as admin_skills_router
+from routes.admin_users import router as admin_users_router
+from routes.admin_matches import router as admin_matches_router
 
 # importar websocket
 from websocket.chat_ws import router as chat_ws_router
@@ -50,3 +53,8 @@ app.include_router(user_router)
 
 # estadísticas de la plataforma
 app.include_router(stats_router)
+
+# panel admin
+app.include_router(admin_skills_router)
+app.include_router(admin_users_router)
+app.include_router(admin_matches_router)

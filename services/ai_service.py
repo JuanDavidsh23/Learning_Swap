@@ -1,11 +1,8 @@
 from openai import OpenAI
-import os
 import random
-from dotenv import load_dotenv
+from core.config import OPENAI_API_KEY
 
-load_dotenv()
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 # Función original para el endpoint /ai

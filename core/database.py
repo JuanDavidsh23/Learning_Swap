@@ -1,24 +1,17 @@
 """
 Modulo de configuracion de base de datos.
 
-Configura el motor de SQLAlchemy, la sesión y la base declarativa.
+Configura el motor de SQLAlchemy, la sesion y la base declarativa.
 Tambien inicializa el cliente de Supabase si se proporcionan las credenciales.
 """
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+from core.config import DATABASE_URL, SUPABASE_URL, SUPABASE_KEY
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True  
+    pool_pre_ping=True
 )
 
 # Inicializar Cliente de Supabase (Soporta Auth, Storage, etc.)
