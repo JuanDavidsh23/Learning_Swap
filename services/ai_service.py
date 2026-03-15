@@ -1,28 +1,24 @@
-from openai import OpenAI
 import random
-from core.config import OPENAI_API_KEY
+import google.generativeai as genai
+from core.config import GEMINI_API_KEY
 
-client = OpenAI(api_key=OPENAI_API_KEY)
-
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Función original para el endpoint /ai
 def ask_ai(message: str) -> str:
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": message}]
-    )
-    return response.choices[0].message.content
+    response = model.generate_content(message)
+    return response.text.strip()
 
 
-# Función para moderar el chat y opinar ocasionalmente
 def moderate_and_comment(message: str, recent_messages: list[dict]) -> str | None:
     """
-    Revisa si el mensaje tiene groserías (siempre advierte) y con 25% de
+    Revisa si el mensaje tiene groserías (siempre advierte) y con 40% de
     probabilidad opina sobre la conversación. Retorna None si decide no hablar.
     """
     should_comment = random.random() < 0.40
 
-    # Construir contexto de los últimos mensajes
+    # Contexto de los últimos mensajes
     context = "\n".join(
         [f"Usuario {m['user_id']}: {m['message']}" for m in recent_messages[-5:]]
     ) or "(inicio de conversación)"
@@ -41,11 +37,6 @@ Instrucciones:
 Si no hay groserías y no tienes nada útil que aportar, responde exactamente la palabra: SILENCIO
 Si sí respondes, escribe directamente el mensaje sin prefijos como 'Asistente:' ni 'IA:'."""
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150
-    )
-
-    result = response.choices[0].message.content.strip()
+    response = model.generate_content(prompt)
+    result = response.text.strip()
     return None if result == "SILENCIO" else result
