@@ -3,7 +3,7 @@ import google.generativeai as genai
 from core.config import GEMINI_API_KEY
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-pro")
 
 # Función original para el endpoint /ai
 def ask_ai(message: str) -> str:
