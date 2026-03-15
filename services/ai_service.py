@@ -20,7 +20,7 @@ def moderate_and_comment(message: str, recent_messages: list[dict]) -> str | Non
     Revisa si el mensaje tiene groserías (siempre advierte) y con 25% de
     probabilidad opina sobre la conversación. Retorna None si decide no hablar.
     """
-    should_comment = random.random() < 0.25
+    should_comment = random.random() < 0.40
 
     # Construir contexto de los últimos mensajes
     context = "\n".join(
