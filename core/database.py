@@ -1,8 +1,8 @@
 """
-Modulo de configuracion de base de datos.
+Database configuration module.
 
-Configura el motor de SQLAlchemy, la sesion y la base declarativa.
-Tambien inicializa el cliente de Supabase si se proporcionan las credenciales.
+Configures the SQLAlchemy engine, session, and declarative base.
+Also initializes the Supabase client if credentials are provided.
 """
 
 from sqlalchemy import create_engine
@@ -14,7 +14,7 @@ engine = create_engine(
     pool_pre_ping=True
 )
 
-# Inicializar Cliente de Supabase (Soporta Auth, Storage, etc.)
+# Initialize Supabase Client (Supports Auth, Storage, etc.)
 from supabase import create_client, Client
 
 supabase: Client = None
@@ -30,11 +30,11 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-# ---------- DEPENDENCIA DB (centralizada) ----------
+# ---------- DB DEPENDENCY (centralized) ----------
 def get_db():
     """
-    Generador de sesión de base de datos para inyección de dependencias en FastAPI.
-    Garantiza que la sesión se cierre correctamente aunque ocurra un error.
+    Database session generator for dependency injection in FastAPI.
+    Guarantees that the session is closed correctly even if an error occurs.
     """
     db = SessionLocal()
     try:

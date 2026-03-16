@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from core.database import Base
 
-# Tabla que representa un mensaje enviado entre dos usuarios en una sala de chat.
+# Table representing a message sent between two users in a chat room.
 class Message(Base):
     __tablename__ = 'messages'
 

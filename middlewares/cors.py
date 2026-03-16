@@ -1,17 +1,17 @@
 """
-Modulo de CORS Middleware.
+CORS Middleware module.
 
-Maneja la configuracion de Cross-Origin Resource Sharing para la aplicacion FastAPI.
+Handles Cross-Origin Resource Sharing configuration for the FastAPI application.
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Agrega el middleware de CORS a la aplicacion FastAPI, Para aceptar peticiones desde diferentes origenes
+# Adds CORS middleware to the FastAPI app to accept requests from different origins
 def add_cors_middleware(app: FastAPI):
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # En producción, cámbialo por tu dominio
+        allow_origins=["*"],  # In production, change to your domain
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

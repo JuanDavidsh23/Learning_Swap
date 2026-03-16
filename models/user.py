@@ -4,14 +4,14 @@ import enum
 from datetime import datetime, timezone
 from core.database import Base 
 
-# Enumeracion para los diferentes roles que un usuario puede tener dentro de la plataforma.
+# Enumerated type for the different roles a user can have within the platform.
 class UserRole(str, enum.Enum):
     user = 'user'
     admin = 'admin'
     superadmin = 'superadmin'
     teacher = 'teacher'
 
-# Tabla que representa un usuario en el sistema.
+# Table representing a user in the system.
 class User(Base):
     __tablename__ = "users"
 

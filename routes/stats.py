@@ -10,16 +10,16 @@ router = APIRouter()
 
 @router.get("/stats", summary="Get Platform Statistics")
 def get_stats(db: Session = Depends(get_db)):
-    # Contar usuarios activos
+    # Count active users
     total_users = db.query(User).filter(User.is_active == True).count()
 
-    # Contar matches totales
+    # Count total matches
     total_matches = db.query(Match).count()
 
-    # Contar habilidades únicas registradas en el sistema
+    # Count unique skills registered in the system
     total_skills = db.query(Skill).count()
 
-    # Contar habilidades que los usuarios están aprendiendo/enseñando
+    # Count skills that users are learning/teaching
     total_user_skills = db.query(UserSkill).count()
 
     return {

@@ -1,8 +1,8 @@
 """
-Modulo de seguridad.
+Security module.
 
-Proporciona funciones de utilidad para el hashing de contraseñas, la verificacion de contraseñas,
-la generacion de tokens de acceso JWT y la dependencia get_current_user para proteger endpoints.
+Provides utility functions for password hashing, password verification,
+generation of JWT access tokens, and the get_current_user dependency to protect endpoints.
 """
 
 import bcrypt
@@ -14,20 +14,20 @@ from core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-# Hashea la contraseña del usuario
+# Hashes the user password
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
     return hashed.decode("utf-8")
 
-# Verifica la contraseña del usuario
+# Verifies the user password
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
         plain_password.encode("utf-8"),
         hashed_password.encode("utf-8")
     )
 
-# Genera un token JWT para el usuario
+# Generates a JWT token for the user
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -37,9 +37,9 @@ def create_access_token(data: dict) -> str:
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """
-    Dependencia reutilizable para proteger endpoints.
-    Decodifica el JWT del header 'Authorization: Bearer <token>'
-    y retorna el usuario autenticado desde la base de datos.
+    Reusable dependency to protect endpoints.
+    Decodes the JWT from the 'Authorization: Bearer <token>' header
+    and returns the authenticated user from the database.
     """
     from core.database import SessionLocal
     from models.user import User
@@ -57,7 +57,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
 
-    # Abrir sesión de BD para buscar el usuario
+    # Open DB session to search for the user
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.user_id == user_id).first()
@@ -72,8 +72,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 def get_current_admin(current_user=Depends(get_current_user)):
     """
-    Dependencia que verifica que el usuario autenticado sea admin.
-    Lanza 403 si el rol no es 'admin'.
+    Dependency that verifies if the authenticated user is an admin.
+    Raises 403 if the role is not 'admin'.
     """
     from models.user import UserRole
     if current_user.role != UserRole.admin:

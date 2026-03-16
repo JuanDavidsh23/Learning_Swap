@@ -4,7 +4,7 @@ from models.user import User
 from schemas.user import UserUpdateRequest
 
 def get_user_profile(db: Session, user_id: int):
-    # Recupera los datos completos del perfil de un usuario, junto con sus habilidades
+    # Retrieves complete profile data for a user, along with their skills
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -12,19 +12,19 @@ def get_user_profile(db: Session, user_id: int):
     from models.users_skills import UserSkill, IntentEnum
     from models.skill import Skill
     
-    # Habilidades que quiere enseñar
+    # Skills they want to teach
     teach_skills_query = db.query(Skill.name).join(UserSkill).filter(
         UserSkill.user_id == user_id,
         UserSkill.intent == IntentEnum.teach
     ).all()
     
-    # Habilidades que quiere aprender
+    # Skills they want to learn
     learn_skills_query = db.query(Skill.name).join(UserSkill).filter(
         UserSkill.user_id == user_id,
         UserSkill.intent == IntentEnum.learn
     ).all()
 
-    # Formateamos un nuevo diccionario para que cumpla con el Schema de respuesta
+    # We format a new dictionary to match the response schema
     profile_data = {
         "user_id": user.user_id,
         "first_name": user.first_name,
@@ -44,39 +44,39 @@ import uuid
 from core.database import supabase
 
 def update_user_profile(db: Session, user_id: int, data: UserUpdateRequest, foto: UploadFile = None):
-    # Actualiza los datos del perfil y opcionalmente sube una nueva imagen a Supabase
+    # Updates profile data and optionally uploads a new image to Supabase
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
-    # --- LÓGICA DE SUBIDA DE IMAGEN A SUPABASE ---
+    # --- SUPABASE IMAGE UPLOAD LOGIC ---
     if foto and supabase:
         try:
-            # Generamos un nombre único para evitar sobreescribir fotos de otros
+            # We generate a unique name to avoid overwriting photos of others
             file_extension = foto.filename.split(".")[-1]
             unique_filename = f"{user_id}_{uuid.uuid4().hex}.{file_extension}"
             
-            # Subimos el archivo al bucket llamado 'avatars' (Debes crear este bucket en Supabase)
-            # foto.file.read() lee los bytes de la imagen
+            # Upload the file to the 'avatars' bucket (You must create this bucket in Supabase)
+            # foto.file.read() reads the bytes of the image
             res = supabase.storage.from_("avatars").upload(
                 file=foto.file.read(),
                 path=unique_filename,
                 file_options={"content-type": foto.content_type}
             )
             
-            # Obtenemos la URL pública para guardarla en la Base de Datos
+            # We get the public URL to save it in the Database
             public_url = supabase.storage.from_("avatars").get_public_url(unique_filename)
             
-            # Asignamos esa URL a nuestro objeto 'data' para que se guarde abajo
+            # We assign that URL to our 'data' object so it gets saved below
             data.avatar_url = public_url
 
         except Exception as e:
-            # Si algo falla con la subida, se lo decimos al Front
+            # If something fails with the upload, tell the Front
             raise HTTPException(status_code=500, detail=f"Error subiendo imagen: {str(e)}")
             
-    # --- FIN LÓGICA DE IMAGEN ---
+    # --- END IMAGE LOGIC ---
     
-    # Solo actualizamos los campos que el Frontend envió (que no son None)
+    # We only update fields sent by the Frontend (which are not None)
     update_data = data.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():

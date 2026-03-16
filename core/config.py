@@ -1,8 +1,8 @@
 """
-Modulo de configuracion.
+Configuration module.
 
-Carga TODAS las variables de entorno desde el archivo .env y las expone
-como constantes para su uso en toda la aplicacion.
+Loads ALL environment variables from the .env file and exposes them
+as constants for use throughout the application.
 """
 
 import os
@@ -10,10 +10,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Base de datos
+# Database
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Supabase (Storage de imágenes)
+# Supabase (Image storage)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 

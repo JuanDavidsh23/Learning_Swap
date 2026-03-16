@@ -12,27 +12,27 @@ def save_user_skills(db: Session, data: UserSkillsRequest, user_id: int):
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # Función interna para procesar una lista de habilidades y su intención
+    # Internal function to process a list of skills and their intent
     def _process_skills(skills_list, intent):
         for skill_name in skills_list:
-            # Buscamos si la habilidad (ej. "React") ya existe en la DB global
+            # Check if the skill (e.g. "React") already exists in the global DB
             skill_name = skill_name.strip().lower()
             skill = db.query(Skill).filter(Skill.name == skill_name).first()
             
-            # Si no existe, la creamos para que otros también puedan usarla
+            # If it doesn't exist, we create it so others can use it too
             if not skill:
                 skill = Skill(name=skill_name)
                 db.add(skill)
-                db.flush() # flush() le asigna un skill_id sin guardar permanentemente aún
+                db.flush() # flush() assigns a skill_id without permanently saving yet
 
-            # Ahora revisamos si el usuario ya tiene esta habilidad con esta intención
+            # Now check if the user already has this skill with this intent
             existing_link = db.query(UserSkill).filter(
                 UserSkill.user_id == user.user_id,
                 UserSkill.skill_id == skill.skill_id,
                 UserSkill.intent == intent
             ).first()
 
-            # Si no existe, creamos el enlace en la tabla intermedia
+            # If it doesn't exist, we create the link in the intermediate table
             if not existing_link:
                 user_skill = UserSkill(
                     user_id=user.user_id,
@@ -41,11 +41,11 @@ def save_user_skills(db: Session, data: UserSkillsRequest, user_id: int):
                 )
                 db.add(user_skill)
 
-    # Procesamos las dos listas que vienen del frontend
+    # Process the two lists coming from the frontend
     _process_skills(data.learn_skills, IntentEnum.learn)
     _process_skills(data.teach_skills, IntentEnum.teach)
 
-    # Guardamos todos los cambios
+    # Save all changes
     db.commit()
 
     return {"msg": "Habilidades guardadas exitosamente"}

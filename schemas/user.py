@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
-# Esquema para registrar un nuevo usuario.
+# Schema for registering a new user.
 class UserCreate(BaseModel):
     first_name: str
     last_name: str 
@@ -9,12 +9,12 @@ class UserCreate(BaseModel):
     password: str
     phone: str
 
-# Esquema para el login de usuario.
+# Schema for user login.
 class UserLogin(BaseModel):
     email: EmailStr 
     password: str 
 
-# Esquema para la respuesta del perfil de usuario.
+# Schema for the user profile response.
 class UserProfileResponse(BaseModel):
     user_id: int
     first_name: str
@@ -26,7 +26,7 @@ class UserProfileResponse(BaseModel):
     skills_to_learn: List[str] = []
     skills_to_teach: List[str] = []
 
-# Esquema para actualizar el perfil de usuario.
+# Schema for updating the user profile.
 class UserUpdateRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None

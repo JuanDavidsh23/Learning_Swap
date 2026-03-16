@@ -10,12 +10,12 @@ router = APIRouter()
 # ---------- REGISTER ----------
 @router.post("/register", summary="Register a new user")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    # Registra un nuevo usuario en la base de datos
+    # Registers a new user in the database
     return register_user(db, user)
 
 
 # ---------- LOGIN ----------
 @router.post("/login", summary="User Login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
-    # Autentica al usuario y devuelve el token JWT
+    # Authenticates the user and returns the JWT token
     return login_user(db, user)

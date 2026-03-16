@@ -7,8 +7,8 @@ from models.chat_room import ChatRoom
 from schemas.match import InteractionRequest
 
 def create_interaction(db: Session, data: InteractionRequest, user_from_id: int):
-    # Registra un Like o Pass. Si es un Like mutuo, crea un Match y su sala de chat
-    # 1. Validar que los usuarios existen
+    # Records a Like or Pass. If it's a mutual Like, creates a Match and its chat room
+    # 1. Validate that users exist
     user_from = db.query(User).filter(User.user_id == user_from_id).first()
     user_to = db.query(User).filter(User.user_id == data.user_to_id).first()
     
@@ -18,7 +18,7 @@ def create_interaction(db: Session, data: InteractionRequest, user_from_id: int)
     if user_from_id == data.user_to_id:
         raise HTTPException(status_code=400, detail="No puedes darte like a ti mismo")
 
-    # 2. Revisar si la interacción ya existe (evitar doble like)
+    # 2. Check if the interaction already exists (avoid double like)
     existing_interaction = db.query(Interaction).filter(
         Interaction.user_from_id == user_from_id,
         Interaction.user_to_id == data.user_to_id
@@ -27,7 +27,7 @@ def create_interaction(db: Session, data: InteractionRequest, user_from_id: int)
     if existing_interaction:
         raise HTTPException(status_code=400, detail="Ya interactuaste con este usuario")
 
-    # 3. Guardar la interacción (Like o Pass)
+    # 3. Save the interaction (Like or Pass)
     new_interaction = Interaction(
         user_from_id=user_from_id,
         user_to_id=data.user_to_id,
@@ -35,10 +35,10 @@ def create_interaction(db: Session, data: InteractionRequest, user_from_id: int)
     )
     db.add(new_interaction)
     
-    # 4. LÓGICA DE MATCH: Solo revisar si fue un "like"
+    # 4. MATCH LOGIC: Only check if it was a "like"
     is_match = False
     if data.action == ActionEnum.like:
-        # Preguntar a la DB: ¿Acaso el usuario_to ya le había dado like a usuario_from antes?
+        # Ask the DB: Has user_to already liked user_from before?
         mutual_like = db.query(Interaction).filter(
             Interaction.user_from_id == data.user_to_id,
             Interaction.user_to_id == user_from_id,
@@ -48,16 +48,16 @@ def create_interaction(db: Session, data: InteractionRequest, user_from_id: int)
         if mutual_like:
             is_match = True
             
-            # Ordenar IDs para cumplir tu CheckConstraint('user1_id < user2_id')
+            # Sort IDs to satisfy the CheckConstraint('user1_id < user2_id')
             user1_id = min(user_from_id, data.user_to_id)
             user2_id = max(user_from_id, data.user_to_id)
             
-            # Crear el Match en la tabla matches
+            # Create the Match in the matches table
             new_match = Match(user1_id=user1_id, user2_id=user2_id)
             db.add(new_match)
-            db.flush()  # Para obtener el match_id generado
+            db.flush()  # To get the generated match_id
             
-            # ¡CREAR LA SALA DE CHAT automáticamente!
+            # CREATE THE CHAT ROOM automatically!
             new_chat_room = ChatRoom(match_id=new_match.match_id)
             db.add(new_chat_room)
 
@@ -75,13 +75,13 @@ def get_user_feed(db: Session, current_user_id: int):
     from models.users_skills import UserSkill, IntentEnum
     from models.skill import Skill
 
-    # 1. IDs de usuarios ya swipeados (para excluirlos)
+    # 1. IDs of users already swiped (to exclude them)
     excluded_ids = [u[0] for u in db.query(Interaction.user_to_id).filter(
         Interaction.user_from_id == current_user_id
     ).all()]
     excluded_ids.append(current_user_id)
 
-    # 2. Mis skills (qué quiero aprender y qué enseño) — 2 queries
+    # 2. My skills (what I want to learn and what I teach) — 2 queries
     my_learn = set(s[0] for s in db.query(UserSkill.skill_id).filter(
         UserSkill.user_id == current_user_id,
         UserSkill.intent == IntentEnum.learn
@@ -92,14 +92,14 @@ def get_user_feed(db: Session, current_user_id: int):
         UserSkill.intent == IntentEnum.teach
     ).all())
 
-    # 3. Usuarios disponibles — 1 query (limitamos a 50 candidatos antes de filtrar)
+    # 3. Available users — 1 query (limit to 50 candidates before filtering)
     available_users = db.query(User).filter(
         User.user_id.notin_(excluded_ids)
     ).order_by(User.datetime_created_at.desc()).limit(50).all()
 
     available_ids = [u.user_id for u in available_users]
 
-    # 4. UNA sola query para TODOS sus skills con nombres — eliminamos N+1
+    # 4. A SINGLE query for ALL their skills with names — eliminates N+1
     all_skills = db.query(
         UserSkill.user_id,
         UserSkill.skill_id,
@@ -109,11 +109,11 @@ def get_user_feed(db: Session, current_user_id: int):
         UserSkill.user_id.in_(available_ids)
     ).all()
 
-    # 5. Organizar en memoria (sin tocar la BD de nuevo)
-    user_teach_ids = {}    # user_id -> set de skill_ids que enseña
-    user_learn_ids = {}    # user_id -> set de skill_ids que aprende
-    user_teach_names = {}  # user_id -> lista de nombres que enseña
-    user_learn_names = {}  # user_id -> lista de nombres que aprende
+    # 5. Organize in memory (without querying the DB again)
+    user_teach_ids = {}    # user_id -> set of skill_ids to teach
+    user_learn_ids = {}    # user_id -> set of skill_ids to learn
+    user_teach_names = {}  # user_id -> list of names to teach
+    user_learn_names = {}  # user_id -> list of names to learn
 
     for uid, sid, intent, name in all_skills:
         if intent == IntentEnum.teach:
@@ -151,14 +151,14 @@ def get_user_feed(db: Session, current_user_id: int):
         else:
             other_users.append(user_data)
 
-    # Compatibles primero, el resto como fallback. Máximo 30 tarjetas.
+    # Compatibles first, the rest as fallback. Maximum 30 cards.
     return {"users": (compatible_users + other_users)[:30]}
 
 def get_user_matches(db: Session, user_id: int):
-    # Devuelve todos los matches exitosos de un usuario y los IDs de chat correspondientes
+    # Returns all successful matches of a user and the corresponding chat IDs
     from sqlalchemy import or_
     
-    # Buscar todos los matches donde este usuario sea user1 o user2
+    # Find all matches where this user is user1 or user2
     matches = db.query(Match).filter(
         or_(
             Match.user1_id == user_id,
@@ -169,13 +169,13 @@ def get_user_matches(db: Session, user_id: int):
     result = []
     
     for match in matches:
-        # Determinar quién es la OTRA persona
+        # Determine who the OTHER person is
         if match.user1_id == user_id:
             other_user = db.query(User).filter(User.user_id == match.user2_id).first()
         else:
             other_user = db.query(User).filter(User.user_id == match.user1_id).first()
         
-        # Buscar la sala de chat asociada a este match
+        # Find the chat room associated with this match
         chat_room = db.query(ChatRoom).filter(ChatRoom.match_id == match.match_id).first()
         
         result.append({
@@ -193,9 +193,9 @@ def get_user_matches(db: Session, user_id: int):
 
 def finish_match_session(db: Session, match_id: int):
     """
-    Finaliza un match (sesión de aprendizaje completada).
-    Otorga puntos a ambos usuarios por haber terminado el intercambio
-    y marca el match como 'is_completed = True' para evitar repeticiones.
+    Finishes a match (completed learning session).
+    Awards points to both users for having finished the exchange
+    and marks the match as 'is_completed = True' to prevent repetitions.
     """
     match = db.query(Match).filter(Match.match_id == match_id).first()
     
@@ -205,18 +205,18 @@ def finish_match_session(db: Session, match_id: int):
     if match.is_completed:
         raise HTTPException(status_code=400, detail="Este match ya fue finalizado y los puntos ya se otorgaron.")
         
-    # Obtener usuarios correspondientes
+    # Get corresponding users
     user1 = db.query(User).filter(User.user_id == match.user1_id).first()
     user2 = db.query(User).filter(User.user_id == match.user2_id).first()
     
     # -------------------------------------------------------------
-    # CONFIGURACIÓN DE PUNTOS: Otorgamos 50 puntos por match completado
+    # POINTS CONFIGURATION: We award 50 points per completed match
     # -------------------------------------------------------------
     POINTS_REWARD = 50
     user1.points += POINTS_REWARD
     user2.points += POINTS_REWARD
     
-    # Bloquear para que no se sumen puntos de nuevo
+    # Block so points are not added again
     match.is_completed = True
     
     db.commit()

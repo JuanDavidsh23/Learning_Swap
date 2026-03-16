@@ -18,10 +18,10 @@ async def upload_chat_file(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Sube una imagen o audio a Supabase Storage y devuelve la URL pública.
-    El frontend luego envía esa URL por WebSocket como mensaje con type image/audio.
+    Uploads an image or audio to Supabase Storage and returns the public URL.
+    The frontend then sends this URL via WebSocket as an image/audio type message.
     """
-    # Validar tipo de archivo
+    # Validate file type
     content_type = file.content_type or ""
 
     if content_type in ALLOWED_IMAGE_TYPES:
@@ -36,16 +36,16 @@ async def upload_chat_file(
             detail="Tipo de archivo no permitido. Solo imágenes (jpg, png, gif, webp) y audios (mp3, ogg, wav, webm)"
         )
 
-    # Leer contenido y validar tamaño
+    # Read content and validate size
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="El archivo supera el límite de 10 MB")
 
-    # Nombre único para evitar colisiones
+    # Unique name to avoid collisions
     extension = file.filename.split(".")[-1] if file.filename else "bin"
     file_name = f"{folder}/{current_user.user_id}_{uuid.uuid4().hex}.{extension}"
 
-    # Subir a Supabase Storage
+    # Upload to Supabase Storage
     try:
         res = supabase.storage.from_("chat-media").upload(
             file_name,
@@ -55,7 +55,7 @@ async def upload_chat_file(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
 
-    # Obtener URL pública
+    # Get public URL
     public_url = supabase.storage.from_("chat-media").get_public_url(file_name)
 
     return {

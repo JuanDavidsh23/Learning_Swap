@@ -8,7 +8,7 @@ from services.skill_service import save_user_skills
 
 router = APIRouter()
 
-# ---------- ONBOARDING HABILIDADES ----------
+# ---------- SKILLS ONBOARDING ----------
 @router.post("/onboarding/skills", summary="Add User Skills Onboarding")
 def add_user_skills(
     data: UserSkillsRequest,

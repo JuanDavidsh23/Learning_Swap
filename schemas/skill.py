@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from typing import List
 
-# Esquema para una solicitud de habilidades de usuario.
-# NOTA: user_id ya NO se envía — el backend lo extrae del JWT token
+# Schema for a user skills request.
+# NOTE: user_id is NO LONGER sent — the backend extracts it from the JWT token
 class UserSkillsRequest(BaseModel):
-    learn_skills: List[str]  # Lista de habilidades que quiere aprender
-    teach_skills: List[str]  # Lista de habilidades que quiere enseñar
+    learn_skills: List[str]  # List of skills they want to learn
+    teach_skills: List[str]  # List of skills they want to teach

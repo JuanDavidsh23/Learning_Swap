@@ -5,7 +5,6 @@ from core.config import GEMINI_API_KEY
 ai = genai.Client(api_key=GEMINI_API_KEY)
 MODEL_NAME = "gemini-3-flash-preview"
 
-# Función original para el endpoint /ai
 def ask_ai(message: str) -> str:
     try:
         response = ai.models.generate_content(
@@ -20,12 +19,12 @@ def ask_ai(message: str) -> str:
 
 def moderate_and_comment(message: str, recent_messages: list[dict]) -> str | None:
     """
-    Revisa si el mensaje tiene groserías (siempre advierte) y con 40% de
-    probabilidad opina sobre la conversación. Retorna None si decide no hablar.
+    Checks if the message contains profanity (always warns) and with a 40%
+    probability comments on the conversation. Returns None if it decides not to speak.
     """
     should_comment = random.random() < 0.40
 
-    # Contexto de los últimos mensajes
+    # Context of the last messages
     context = "\n".join(
         [f"Usuario {m['user_id']}: {m['message']}" for m in recent_messages[-5:]]
     ) or "(inicio de conversación)"

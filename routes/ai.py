@@ -4,17 +4,17 @@ from services.ai_service import ask_ai
 
 router = APIRouter()
 
-# Modelo de solicitud para la ruta de IA
+# Request model for the AI route
 class AIRequest(BaseModel):
     message: str
 
 from fastapi import HTTPException
 
-# Ruta para interactuar con el asistente de IA
+# Route to interact with the AI assistant
 @router.post("/ai", summary="Interact with the AI Assistant")
 def ai_chat(request: AIRequest):
     try:
-        # Envia el mensaje al servicio de IA y devuelve la respuesta generada
+        # Sends the message to the AI service and returns the generated response
         answer = ask_ai(request.message)
         return {"response": answer}
     except Exception as e:

@@ -3,12 +3,12 @@ from sqlalchemy.orm import relationship
 import enum
 from core.database import Base
 
-# Enumeracion indicando si un usuario quiere aprender o enseñar una habilidad.
+# Enumeration indicating whether a user wants to learn or teach a skill.
 class IntentEnum(enum.Enum):
     learn = 'learn'
     teach = 'teach'
 
-# Tabla que representa una asociacion entre un usuario y una habilidad (muchos a muchos), junto con su intencion (aprender o enseñar).
+# Table representing an association between a user and a skill (many-to-many), along with their intent (learn or teach).
 class UserSkill(Base):
     __tablename__ = 'users_skills'
     

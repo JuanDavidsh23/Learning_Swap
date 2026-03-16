@@ -9,7 +9,7 @@ from fastapi import UploadFile, File, Form, HTTPException
 
 router = APIRouter()
 
-# ---------- OBTENER PERFIL ----------
+# ---------- GET PROFILE ----------
 @router.get("/users/{user_id}", response_model=UserProfileResponse, summary="Get User Profile")
 def read_user_profile(
     user_id: int,
@@ -18,7 +18,7 @@ def read_user_profile(
 ):
     return get_user_profile(db, user_id)
 
-# ---------- OBTENER MI PERFIL ----------
+# ---------- GET MY PROFILE ----------
 @router.get("/me", response_model=UserProfileResponse, summary="Get My Profile")
 def read_my_profile(
     db: Session = Depends(get_db),
@@ -26,7 +26,7 @@ def read_my_profile(
 ):
     return get_user_profile(db, current_user.user_id)
 
-# ---------- ACTUALIZAR PERFIL ----------
+# ---------- UPDATE PROFILE ----------
 @router.put("/users/{user_id}", response_model=UserProfileResponse, summary="Update User Profile")
 def edit_user_profile(
     user_id: int,

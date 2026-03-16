@@ -8,14 +8,14 @@ from services.match_service import create_interaction
 
 router = APIRouter()
 
-# ---------- SWIPES LIKES Y PASSES ----------
+# ---------- SWIPES LIKES AND PASSES ----------
 @router.post("/swipe", summary="Record a User Swipe")
 def swipe_user(
     data: InteractionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # El user_from_id se extrae del token JWT, no del body
+    # user_from_id is extracted from the JWT token, not from the body
     return create_interaction(db, data, user_from_id=current_user.user_id)
 
 @router.get("/feed", response_model=dict, summary="Get User Feed")

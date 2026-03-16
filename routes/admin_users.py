@@ -86,7 +86,7 @@ def update_user(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     update_data = data.model_dump(exclude_unset=True)
-    # Convertir role a Enum si viene
+    # Convert role to Enum if provided
     if "role" in update_data:
         update_data["role"] = UserRole(update_data["role"])
 
@@ -98,7 +98,7 @@ def update_user(
     return {"user_id": user.user_id, "email": user.email, "role": str(user.role), "is_active": user.is_active}
 
 
-# ---------- DESACTIVAR (borrado lógico) ----------
+# ---------- DEACTIVATE (soft delete) ----------
 @router.delete("/users/{user_id}", summary="Admin: Deactivate user")
 def deactivate_user(
     user_id: int,
